@@ -1,0 +1,12 @@
+# 依赖
+node_modules/
+
+# 运行时数据（本地待办与设置，含隐私，不上传）
+data/
+
+# 日志
+*.log
+
+# 系统文件
+Thumbs.db
+Desktop.ini

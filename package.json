@@ -1,0 +1,23 @@
+{
+  "name": "edge-todo",
+  "version": "0.2.0",
+  "description": "桌面贴边待办悬窗：半透明长条吸附屏幕四边，悬停/点击展开，到点提醒、番茄钟、历史留存",
+  "main": "main.js",
+  "author": "Sunpigig",
+  "license": "MIT",
+  "keywords": [
+    "electron",
+    "todo",
+    "windows",
+    "desktop-widget",
+    "pomodoro",
+    "edge-dock",
+    "transparent-window"
+  ],
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^45.1.0"
+  }
+}
