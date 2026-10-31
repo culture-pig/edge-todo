@@ -316,11 +316,12 @@ ipcMain.handle('settings:set', (_e, patch) => {
   return true;
 });
 
-ipcMain.handle('todos:add', (_e, { text, due }) => {
+ipcMain.handle('todos:add', (_e, { text, due, priority }) => {
   text = String(text || '').trim().slice(0, 200);
   if (!text) return null;
   const t = {
     id: crypto.randomUUID(), text, done: false, due: due || null,
+    priority: ['high', 'mid', 'low'].includes(priority) ? priority : 'low',
     createdAt: new Date().toISOString(), completedAt: null, pomodoros: 0
   };
   todos.unshift(t);
@@ -349,6 +350,7 @@ ipcMain.handle('todos:update', (_e, id, patch) => {
   if (!t) return false;
   if (patch && typeof patch.text === 'string' && patch.text.trim()) t.text = patch.text.trim().slice(0, 200);
   if (patch && 'due' in patch) t.due = patch.due || null;
+  if (patch && ['high', 'mid', 'low'].includes(patch.priority)) t.priority = patch.priority;
   saveTodos(); sendTodos();
   return true;
 });

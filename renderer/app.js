@@ -73,21 +73,32 @@ function initPanel() {
         </div>
         <div class="row2">
           <input type="datetime-local" id="inpDue" title="提醒时间（可选）">
-          <span class="hint">可选提醒时间</span>
+          <span class="prio" id="prioPick" title="重要程度">
+            <button class="pr pr-h" data-prio="high" title="重要：高"><i></i>高</button>
+            <button class="pr pr-m" data-prio="mid" title="重要：中"><i></i>中</button>
+            <button class="pr pr-l on" data-prio="low" title="重要：低"><i></i>低</button>
+          </span>
         </div>
       </div>
     </div>`;
 
   const inp = $('#inpText'), due = $('#inpDue');
+  let newPrio = 'low';   // 新待办的重要程度，默认低
   const addTodo = async () => {
     const text = inp.value.trim();
     if (!text) return inp.focus();
     const d = due.value ? new Date(due.value) : null;
-    await api.add({ text, due: d && !isNaN(d) ? d.toISOString() : null });
+    await api.add({ text, due: d && !isNaN(d) ? d.toISOString() : null, priority: newPrio });
     inp.value = ''; due.value = ''; inp.focus();
   };
   $('#btnAdd').onclick = addTodo;
   inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') addTodo(); });
+  $('#prioPick').addEventListener('click', (e) => {
+    const b = e.target.closest('.pr');
+    if (!b) return;
+    newPrio = b.dataset.prio;
+    $$('#prioPick .pr').forEach((x) => x.classList.toggle('on', x === b));
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && e.target.tagName !== 'INPUT') api.collapse();
   });
@@ -147,8 +158,13 @@ function render() {
 
   const groups = { today: [], later: [] };
   for (const t of todos) if (!t.done) groups[groupOf(t)].push(t);
-  groups.today.sort((a, b) => (a.due ? new Date(a.due) : Infinity) - (b.due ? new Date(b.due) : Infinity));
-  groups.later.sort((a, b) => new Date(a.due) - new Date(b.due));
+  // 组内排序：重要程度 高→中→低；同档按创建先后，先创建的在前
+  const prioRank = { high: 0, mid: 1, low: 2 };
+  const byPrio = (a, b) =>
+    (prioRank[a.priority || 'low'] - prioRank[b.priority || 'low']) ||
+    (new Date(a.createdAt) - new Date(b.createdAt));
+  groups.today.sort(byPrio);
+  groups.later.sort(byPrio);
 
   const active = groups.today.length + groups.later.length;
   $('#count').textContent = active ? `${active}` : '';
@@ -232,13 +248,21 @@ function row(t) {
     `<button data-act="pomo" data-id="${t.id}">${running ? '■' : '▶'}</button>`;
   const snooze = overdue ? `<button data-act="snooze" data-id="${t.id}">改明天</button>` : '';
   const pomoBadge = t.pomodoros ? `<span class="pomo-badge" title="完成番茄数">🍅${t.pomodoros}</span>` : '';
+  const pc = t.done ? '' : (t.priority === 'high' ? 'p-high' : t.priority === 'mid' ? 'p-mid' : '');
+  const cur = t.priority || 'low';
+  const prioEdit = t.done ? '' : `
+    <span class="prio-edit" title="重要程度">
+      <button data-act="prio" data-val="high" data-id="${t.id}" class="pe-h ${cur === 'high' ? 'cur' : ''}" title="设为高"></button>
+      <button data-act="prio" data-val="mid" data-id="${t.id}" class="pe-m ${cur === 'mid' ? 'cur' : ''}" title="设为中"></button>
+      <button data-act="prio" data-val="low" data-id="${t.id}" class="pe-l ${cur === 'low' ? 'cur' : ''}" title="设为低"></button>
+    </span>`;
   return `
-  <div class="todo ${t.done ? 'done' : ''} ${running ? 'running' : ''}" data-id="${t.id}">
+  <div class="todo ${t.done ? 'done' : ''} ${running ? 'running' : ''} ${pc}" data-id="${t.id}">
     <div class="ck" data-act="toggle" data-id="${t.id}" title="完成/取消完成"></div>
     <span class="txt" data-id="${t.id}" title="双击编辑">${esc(t.text)}</span>
     ${pomoBadge}
     ${t.due ? `<span class="due ${overdue ? 'overdue' : ''}" title="提醒时间">${fmtDue(t.due)}</span>` : ''}
-    <span class="act">${left}${pomoBtn}${snooze}<button data-act="del" data-id="${t.id}" title="删除">✕</button></span>
+    <span class="act">${left}${prioEdit}${pomoBtn}${snooze}<button data-act="del" data-id="${t.id}" title="删除">✕</button></span>
   </div>`;
 }
 
@@ -271,6 +295,7 @@ function onListClick(e) {
   if (act === 'toggle') api.toggle(id);
   else if (act === 'del') api.remove(id);
   else if (act === 'pomo') pomoState.running ? api.pomoStop() : api.pomoStart(id);
+  else if (act === 'prio') api.update(id, { priority: btn.dataset.val });
   else if (act === 'set-open') api.settingsSet({ openMode: btn.dataset.val });
   else if (act === 'set-days') api.settingsSet({ historyDays: +btn.dataset.val });
   else if (act === 'clear-history') todos.filter((t) => t.done).forEach((t) => api.remove(t.id));
