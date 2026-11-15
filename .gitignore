@@ -1,0 +1,75 @@
+# ============================================================
+# 隐私与凭证：真实值永不入库，仅提交 .example 模板
+# ============================================================
+.env
+.env.*
+!.env.example          # 放行示例文件
+
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+
+credentials.json
+secrets.json
+secrets.yaml
+secrets.*
+
+*apikey*
+*api_key*
+*api-key*
+*access*token*
+*personal*access*token*
+
+# Claude Code：个人项目指令与自动记忆
+CLAUDE.local.md
+.claude/memory/
+.claude/backups/
+.claude/projects/
+
+# WorkBuddy：会话记忆、本地工作数据与 AI 缓存
+.workbuddy/
+.workbuddy-ai/
+.workbuddy_user/
+.workbuddy_eval/
+.workbuddy/memory/
+
+# DeepSeek Harness：机器本地配置与运行时数据
+.dsh-doctor/
+.local/
+compose.local.yaml
+.env.lan
+
+# ============================================================
+# 系统与编辑器：个人环境产物，不应强加给团队
+# ============================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+.vscode/
+.idea/
+
+# ============================================================
+# edge-todo 运行时数据：本机个人待办/设置，不入库（main.js 启动时自动重建）
+# ============================================================
+data/
+
+# 显卡驱动在本项目目录生成的日志杂项
+NVIDIA Corporation/
+
+# ============================================================
+# 语言 / 框架通用产物（按需保留）
+# ============================================================
+node_modules/
+dist/
+build/
+out/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
